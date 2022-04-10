@@ -11,4 +11,8 @@ public class GreetingService {
 
     }
 
+    static String print() {
+        return "Hello from Service";
+    }
+
 }
