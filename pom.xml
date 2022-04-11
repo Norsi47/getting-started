@@ -98,6 +98,12 @@
       <artifactId>vaadin-text-field-flow</artifactId>
       <version>14.7.1</version>
     </dependency>
+    <dependency>
+      <groupId>org.projectlombok</groupId>
+      <artifactId>lombok</artifactId>
+      <version>RELEASE</version>
+      <scope>compile</scope>
+    </dependency>
   </dependencies>
   <build>
     <plugins>
