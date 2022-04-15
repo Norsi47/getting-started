@@ -1,6 +1,5 @@
 package org.gs.proxy;
 
-import org.eclipse.microprofile.rest.client.inject.RegisterRestClient;
 import org.gs.model.TvSeries;
 
 import javax.ws.rs.GET;
@@ -11,7 +10,8 @@ import javax.ws.rs.core.MediaType;
 
 @Path("/singlesearch")
 @Produces(MediaType.APPLICATION_JSON)
-@RegisterRestClient(baseUri = "https://api.tvmaze.com/")
+//in application.prop file now
+//@RegisterRestClient(baseUri = "https://api.tvmaze.com/")
 public interface TvSeriesProxy {
     /*this is where the example is taken from
     https://api.tvmaze.com/singlesearch/shows */
