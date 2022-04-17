@@ -11,7 +11,8 @@ import javax.ws.rs.core.MediaType;
 
 @Path("/singlesearch")
 @Produces(MediaType.APPLICATION_JSON)
-@RegisterRestClient(baseUri = "https://api.tvmaze.com/")
+//added to app.prop
+//@RegisterRestClient(baseUri = "https://api.tvmaze.com/")
 public interface TvSeriesClient {
     @GET
     @Path("/shows")
