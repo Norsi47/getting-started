@@ -17,7 +17,7 @@ public interface TvSeriesClient {
     @GET
     @Path("/shows")
     //the "q" is to match the query param
-    TvSeriesResponse get(@QueryParam("q") String title);
+    TvSeriesResponse getTvSeries(@QueryParam("q") String title);
 
 
 
