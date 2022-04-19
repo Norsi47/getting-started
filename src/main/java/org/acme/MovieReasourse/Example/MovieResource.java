@@ -1,5 +1,6 @@
 package org.acme.MovieReasourse.Example;
 
+import io.vertx.mutiny.pgclient.PgPool;
 import org.eclipse.microprofile.openapi.annotations.Operation;
 import org.eclipse.microprofile.openapi.annotations.media.Content;
 import org.eclipse.microprofile.openapi.annotations.media.Schema;
@@ -8,6 +9,8 @@ import org.eclipse.microprofile.openapi.annotations.parameters.RequestBody;
 import org.eclipse.microprofile.openapi.annotations.responses.APIResponse;
 import org.eclipse.microprofile.openapi.annotations.tags.Tag;
 
+import javax.annotation.PostConstruct;
+import javax.inject.Inject;
 import javax.ws.rs.Consumes;
 import javax.ws.rs.DELETE;
 import javax.ws.rs.GET;
@@ -23,9 +26,32 @@ import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
 
+import static org.aesh.readline.terminal.Key.m;
+
 @Path("/movies")
 @Tag(name = "Movie Resource", description = "Movie REST API")
 public class MovieResource {
+
+    @Inject
+    PgPool pgPoolClient;
+
+    @PostConstruct
+    void config() {
+        initdb();
+    }
+
+    private void initdb() {
+        //this is to create schema
+        pgPoolClient.query("Drop Table if Exists movies").execute()
+                .flatMap(m-> pgPoolClient.query("Create Table Movies (id serial primary key, " +
+                        "title Text Not null)").execute())
+                //inserting data into db
+                 .flatMap(m -> pgPoolClient.query("Insert Into Movies (title) Values('The Lord of the Rings')").execute())
+                 .flatMap(m -> pgPoolClient.query("Insert Into Movies (title) Values('Harry Potter')").execute())
+                .await()
+                .indefinitely();
+    }
+
 
     public static List<Movies> moviesList = new ArrayList<>();
 
@@ -51,10 +77,10 @@ public class MovieResource {
     @Produces(MediaType.APPLICATION_JSON)
     @Operation(operationId = "getMovies", summary = "getMovies", description = "Get all movies inside the list")
     @APIResponse(
-        responseCode = "200",
-        description = "Operation Completed",
-        content = @Content(mediaType = MediaType.APPLICATION_JSON)
-)
+            responseCode = "200",
+            description = "Operation Completed",
+            content = @Content(mediaType = MediaType.APPLICATION_JSON)
+    )
     //method to get all movies
     public Response getMovie() {
 
@@ -79,7 +105,6 @@ public class MovieResource {
     }
 
 
-
     //updates what is already put into api
     @PUT
     @Path("{id}/{title}")
@@ -91,15 +116,15 @@ public class MovieResource {
             description = "Movie updated",
             content = @Content(mediaType = MediaType.TEXT_PLAIN)
     )
-    public Response updateMovie( @Parameter (
+    public Response updateMovie(@Parameter(
             description = "Movie id",
             required = true
     )
-             @PathParam("id") Long id,
-                                 @Parameter(
-                                         description = "Movie title",
-                                         required = true
-) @PathParam("title") String title) {
+                                @PathParam("id") Long id,
+                                @Parameter(
+                                        description = "Movie title",
+                                        required = true
+                                ) @PathParam("title") String title) {
         moviesList.stream().map(moviesList -> {
             if (moviesList.getId().equals(id)) {
                 moviesList.setTitle(title);
@@ -120,18 +145,20 @@ public class MovieResource {
             content = @Content(mediaType = MediaType.TEXT_PLAIN)
     )
     @APIResponse(
-        responseCode = "400",
-        description = "Movie not valid",
-        content = @Content(mediaType = MediaType.APPLICATION_JSON)
+            responseCode = "400",
+            description = "Movie not valid",
+            content = @Content(mediaType = MediaType.APPLICATION_JSON)
 
-)
+    )
     public Response deleteMovie(
-           @PathParam("id") Long id) {
-       Optional<Movies> moviesToDelete = moviesList.stream().filter(movies -> movies.getId().equals(id)).findFirst();
+            @PathParam("id") Long id) {
+        Movies moviesResponse = new Movies();
+
+        Optional<Movies> moviesToDelete = moviesList.stream().filter(movies -> movies.getId().equals(id)).findFirst();
         //boolean var is needed to see if it is saved
         boolean removed = false;
         if (moviesToDelete.isPresent()) {
-             removed = moviesList.remove(moviesToDelete.get());
+            removed = moviesList.remove(moviesToDelete.get());
         }
         if (removed) {
             return Response.noContent().build();
@@ -139,6 +166,8 @@ public class MovieResource {
         return Response.status(Response.Status.BAD_REQUEST).build();
 
     }
+
+
 //find out how to do the same thing but in a service class and this controller class
 
 }
