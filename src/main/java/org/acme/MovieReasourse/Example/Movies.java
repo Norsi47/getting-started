@@ -2,17 +2,16 @@ package org.acme.MovieReasourse.Example;
 
 import io.smallrye.mutiny.Multi;
 import io.vertx.mutiny.pgclient.PgPool;
+import io.vertx.mutiny.sqlclient.Row;
 import lombok.Data;
 import org.eclipse.microprofile.openapi.annotations.media.Schema;
-import org.h2.result.Row;
 
 @Data
 @Schema(name = "Movie", description = "Movie Representation")
 public class Movies {
     private Long id;
-    @Schema(required = true )
     private String title;
-    private String status;
+
 
     public Movies(){}
 
@@ -27,14 +26,14 @@ public class Movies {
 
     //method to find all movies in db
     public static Multi<Movies> findAll(PgPool pgPool) {
-       return pgPool.query("Select id, title From movies Order By title Desc").execute()
+      return pgPool.query("SELECT id, title FROM movies ORDER BY title DESC").execute()
                 .onItem().transformToMulti(set -> Multi.createFrom().iterable(set))
                 .onItem().transform(Movies::from);
 
     }
 
-    private static Movies from(Row row) {
-        return new Movies(row.getLong ("id"), row.getString("title"));
+    private static Movies from (Row row) {
+        return new Movies(row.getLong("id"), row.getString("title"));
     }
 
 }
