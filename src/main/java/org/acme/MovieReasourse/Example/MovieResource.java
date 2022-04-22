@@ -1,6 +1,7 @@
 package org.acme.MovieReasourse.Example;
 
 import io.smallrye.mutiny.Multi;
+import io.smallrye.mutiny.Uni;
 import io.vertx.mutiny.pgclient.PgPool;
 import org.eclipse.microprofile.openapi.annotations.Operation;
 import org.eclipse.microprofile.openapi.annotations.media.Content;
@@ -44,6 +45,13 @@ public class MovieResource {
     @GET
     public Multi<Movies> get() {
         return Movies.findAll(pgPoolClient);
+    }
+
+    @GET
+    @Path("{id}")
+    public Uni<Movies> getMovie(@PathParam("id") Long id) {
+        return Movies.findByID(pgPoolClient, id);
+
     }
 
     private void initdb() {
