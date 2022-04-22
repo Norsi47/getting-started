@@ -48,7 +48,7 @@ public class MovieResource {
     }
 
     @GET
-    @Path("{id}")
+    @Path("/getMovie/{id}")
     public Uni<Movies> getMovie(@PathParam("id") Long id) {
         return Movies.findByID(pgPoolClient, id);
 
