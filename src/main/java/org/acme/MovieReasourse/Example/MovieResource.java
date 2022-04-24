@@ -1,5 +1,6 @@
 package org.acme.MovieReasourse.Example;
 
+import com.vaadin.flow.component.UI;
 import io.smallrye.mutiny.Multi;
 import io.smallrye.mutiny.Uni;
 import io.vertx.mutiny.pgclient.PgPool;
@@ -23,12 +24,12 @@ import javax.ws.rs.PathParam;
 import javax.ws.rs.Produces;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
+import java.net.URI;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
 
-import static org.aesh.readline.terminal.Key.m;
 
 @Path("/movies")
 @Tag(name = "Movie Resource", description = "Movie REST API")
@@ -49,19 +50,44 @@ public class MovieResource {
 
     @GET
     @Path("/getMovie/{id}")
-    public Uni<Movies> getMovie(@PathParam("id") Long id) {
-        return Movies.findByID(pgPoolClient, id);
+    public Uni<Response> getMovie(@PathParam("id") Long id) {
+        return Movies.findByID(pgPoolClient, id)
+                .onItem()
+                .transform(movie -> movie !=null ? Response.ok(movie) :
+                        Response.status(Response.Status.NOT_FOUND))
+                .onItem()
+                .transform(Response.ResponseBuilder::build);
+
+    }
+
+    @POST
+    public Uni<Response> create(Movies movies) {
+        return Movies.saveDB(pgPoolClient, movies.getTitle())
+                .onItem()
+                .transform(id -> URI.create("/movies/" +id))
+                .onItem()
+                .transform(uri -> Response.created(uri).build());
+    }
+
+    @DELETE
+    @Path("/deletes/{id}")
+    public Uni<Response> deleteDB(@PathParam("id") Long id) {
+        return Movies.deleteDB(pgPoolClient, id)
+                .onItem()
+                .transform(deleted -> deleted ? Response.Status.NO_CONTENT : Response.Status.NOT_FOUND)
+                .onItem()
+                .transform(status -> Response.status(status).build());
 
     }
 
     private void initdb() {
         //this is to create schema
         pgPoolClient.query("Drop Table if Exists movies").execute()
-                .flatMap(m-> pgPoolClient.query("Create Table Movies (id serial primary key, " +
+                .flatMap(m -> pgPoolClient.query("Create Table Movies (id serial primary key, " +
                         "title Text Not null)").execute())
                 //inserting data into db
-                 .flatMap(m -> pgPoolClient.query("Insert Into Movies (title) Values('The Lord of the Rings')").execute())
-                 .flatMap(m -> pgPoolClient.query("Insert Into Movies (title) Values('Harry Potter')").execute())
+                .flatMap(m -> pgPoolClient.query("Insert Into Movies (title) Values('The Lord of the Rings')").execute())
+                .flatMap(m -> pgPoolClient.query("Insert Into Movies (title) Values('Harry Potter')").execute())
                 .await()
                 .indefinitely();
     }
@@ -72,6 +98,7 @@ public class MovieResource {
     @POST
     @Produces(MediaType.APPLICATION_JSON)
     @Consumes(MediaType.APPLICATION_JSON)
+    @Path("/getMoviesFirst")
     @Operation(operationId = "createMovies", summary = "Create a new Movie", description = "Create a new movie to add inside the list")
     @APIResponse(
             responseCode = "201",
@@ -89,6 +116,7 @@ public class MovieResource {
 
     @GET
     @Produces(MediaType.APPLICATION_JSON)
+    @Path("/getMoviesSecond")
     @Operation(operationId = "getMovies", summary = "getMovies", description = "Get all movies inside the list")
     @APIResponse(
             responseCode = "200",

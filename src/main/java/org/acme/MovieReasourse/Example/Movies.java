@@ -35,7 +35,15 @@ public class Movies {
                 .onItem()
                 .transform(m -> m.iterator().hasNext() ? from(m.iterator().next()) : null);
 
+    }
 
+
+    public static Uni<Long> saveDB(PgPool client, String title) {
+        return client
+                .preparedQuery("INSERT INT MOVIES (title) VALUE ($1) RETURNING id")
+                .execute(Tuple.of(title))
+                .onItem()
+                .transform(m -> m.iterator().next().getLong("id"));
     }
 
     //method to find all movies in db
@@ -44,6 +52,15 @@ public class Movies {
                 .onItem().transformToMulti(set -> Multi.createFrom().iterable(set))
                 .onItem()
               .transform(Movies::from);
+
+    }
+
+    public static  Uni <Boolean> deleteDB(PgPool client, Long id) {
+        return client
+                .preparedQuery("DELETE FROM movies WHERE id = $1")
+                .execute(Tuple.of(id))
+                .onItem()
+                .transform(m -> m.rowCount() == 1);
 
     }
 
